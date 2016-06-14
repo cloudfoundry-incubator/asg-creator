@@ -14,18 +14,18 @@ Options
 
 * *private_networks*: Set to `true` to write out all private networks less any blacklisted IPs/networks
 * *public_networks*: Set to `true` to write out all public networks less any blacklisted IPs/networks
-* *exclude_ips*: An array of IPs to exclude
-* *exclude_networks*: An array of CIDRs to exclude
+* *excluded_ips*: An array of IPs to exclude
+* *excluded_networks*: An array of CIDRs to exclude
 
 Create a config:
 
 ```yaml
 private_networks: true
 
-exclude_ips:
+excluded_ips:
 - 192.168.100.4
 
-exclude_networks:
+excluded_networks:
 - 192.168.1.0/24
 ```
 
