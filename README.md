@@ -1,6 +1,25 @@
 # ASG Creator
 
-This tool can be used to create Application Security Groups for use in Cloud Foundry.
+[Application Security
+Groups](http://docs.cloudfoundry.org/adminguide/app-sec-groups.html) (ASGs) are
+used to whitelist outbound container network access in [Cloud
+Foundry](http://cloudfoundry.org). Application containers require ASGs to
+enable outbound network access.
+
+Creating ASGs for the `default-staging` and `default-running` ASG sets can be
+intimidating as they are defined as whitelists, but you want to specify
+specific IPs and networks to be blacklisted. An example of addresses you would
+want to blacklist would be those for VMs running Cloud Foundry system
+components, or those for Marketplace Service VMs.
+
+The ASG Creator can be used to create baseline public-networks and
+private-networks ASGs that allow all public and private networks *except* those
+you want to blacklist. Additionally, it will block by default the
+169.254.169.254 link-local address that's used by multiple IaaS providers for
+VM metadata.
+
+You are encouraged to modify the files created by ASG Creator to suit your
+needs.
 
 ## Installation
 
@@ -10,12 +29,12 @@ go get github.com/cloudfoundry-incubator/asg-creator
 
 ## Usage
 
-Options
+Config Options
 
-* *excluded_ips*: An array of IPs to exclude
-* *excluded_networks*: An array of CIDRs to exclude
+* *excluded_ips*: An array of IPs to exclude; these IPs will be omitted from the baseline ASG rules
+* *excluded_networks*: An array of CIDRs to exclude; all IPs in these networks will be omitted from the baseline ASG rules
 
-Create a config:
+Create a config, `config.yml`:
 
 ```yaml
 excluded_ips:
@@ -25,13 +44,12 @@ excluded_networks:
 - 192.168.1.0/24
 ```
 
-Use the config to create ASG configuration files:
+Use the config to create ASG rules files:
 
 ```
 $ asg-creator create --config config.yml
 Wrote public-networks.json
 Wrote private-networks.json
-
 OK
 $ cat private-networks.json | jq '.'
 [
@@ -82,9 +100,18 @@ $ cat public-networks.json | jq '.'
 ]
 ```
 
-Use the configuration files to create ASGs:
+Modify the ASG rules files per your network policy for application containers
+running untrusted code.
+
+Use the rules files to create ASGs with the [cf
+CLI](https://github.com/cloudfoundry/cli/releases/latest):
 
 ```
 $ cf create-security-group private-networks private-networks.json
+$ cf bind-staging-security-group private-networks
+$ cf bind-running-security-group private-networks
+
 $ cf create-security-group public-networks public-networks.json
+$ cf bind-staging-security-group public-networks
+$ cf bind-running-security-group public-networks
 ```
