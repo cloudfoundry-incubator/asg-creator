@@ -14,6 +14,84 @@ import (
 var _ = Describe("Create", func() {
 	var cmd *exec.Cmd
 
+	AfterEach(func() {
+		os.RemoveAll("public-networks.json")
+		os.RemoveAll("private-networks.json")
+	})
+
+	Context("when not given a config", func() {
+		BeforeEach(func() {
+			cmd = exec.Command(binPath, "create")
+		})
+
+		It("writes public-networks.json", func() {
+			sess, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(sess).Should(gexec.Exit(0))
+
+			_, err = os.Lstat("public-networks.json")
+			Expect(err).NotTo(HaveOccurred())
+
+			bs, err := ioutil.ReadFile("public-networks.json")
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(bs).To(MatchJSON([]byte(`
+				[
+					{
+						"destination": "0.0.0.0-9.255.255.255",
+						"protocol": "all"
+					},
+					{
+						"destination": "11.0.0.0-169.254.169.253",
+						"protocol": "all"
+					},
+					{
+						"destination": "169.254.169.255-172.15.255.255",
+						"protocol": "all"
+					},
+					{
+						"destination": "172.32.0.0-192.167.255.255",
+						"protocol": "all"
+					},
+					{
+						"destination": "192.169.0.0-255.255.255.255",
+						"protocol": "all"
+					}
+				]`)))
+		})
+
+		It("writes private-networks.json", func() {
+			sess, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(sess).Should(gexec.Exit(0))
+
+			_, err = os.Lstat("private-networks.json")
+			Expect(err).NotTo(HaveOccurred())
+
+			bs, err := ioutil.ReadFile("private-networks.json")
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(bs).To(MatchJSON([]byte(`
+				[
+					{
+						"protocol": "all",
+						"destination": "10.0.0.0-10.255.255.255"
+					},
+					{
+						"protocol": "all",
+						"destination": "172.16.0.0-172.31.255.255"
+					},
+					{
+						"protocol": "all",
+						"destination": "192.168.0.0-192.168.255.255"
+					}
+				]`)))
+		})
+
+	})
+
 	Context("when given a config", func() {
 		var configFile *os.File
 		var config string
@@ -33,67 +111,15 @@ var _ = Describe("Create", func() {
 			os.RemoveAll(configFile.Name())
 		})
 
-		Context("when the config contains public_networks: true", func() {
+		Context("when the config contains private networks to exclude", func() {
 			BeforeEach(func() {
 				config = `
-public_networks: true
+excluded_networks:
+- 192.168.1.0/24
 `
 			})
 
-			AfterEach(func() {
-				os.RemoveAll("public-networks.json")
-			})
-
-			It("writes public-networks.json", func() {
-				sess, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-				Expect(err).NotTo(HaveOccurred())
-
-				Eventually(sess).Should(gexec.Exit(0))
-
-				_, err = os.Lstat("public-networks.json")
-				Expect(err).NotTo(HaveOccurred())
-
-				bs, err := ioutil.ReadFile("public-networks.json")
-				Expect(err).NotTo(HaveOccurred())
-
-				Expect(bs).To(MatchJSON([]byte(`
-[
-  {
-    "destination": "0.0.0.0-9.255.255.255",
-    "protocol": "all"
-  },
-  {
-    "destination": "11.0.0.0-169.254.169.253",
-    "protocol": "all"
-  },
-  {
-    "destination": "169.254.169.255-172.15.255.255",
-    "protocol": "all"
-  },
-  {
-    "destination": "172.32.0.0-192.167.255.255",
-    "protocol": "all"
-  },
-  {
-    "destination": "192.169.0.0-255.255.255.255",
-    "protocol": "all"
-  }
-]`)))
-			})
-		})
-
-		Context("when the config contains private_networks: true", func() {
-			BeforeEach(func() {
-				config = `
-private_networks: true
-`
-			})
-
-			AfterEach(func() {
-				os.RemoveAll("private-networks.json")
-			})
-
-			It("writes private-networks.json", func() {
+			It("should omit that network in the private-networks ASG", func() {
 				sess, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -106,168 +132,225 @@ private_networks: true
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(bs).To(MatchJSON([]byte(`
-[
-  {
-    "protocol": "all",
-    "destination": "10.0.0.0-10.255.255.255"
-  },
-  {
-    "protocol": "all",
-    "destination": "172.16.0.0-172.31.255.255"
-  },
-  {
-    "protocol": "all",
-    "destination": "192.168.0.0-192.168.255.255"
-  }
-]`)))
+					[
+						{
+							"protocol": "all",
+							"destination": "10.0.0.0-10.255.255.255"
+						},
+						{
+							"protocol": "all",
+							"destination": "172.16.0.0-172.31.255.255"
+						},
+						{
+							"protocol": "all",
+							"destination": "192.168.0.0-192.168.0.255"
+						},
+						{
+							"protocol": "all",
+							"destination": "192.168.2.0-192.168.255.255"
+						}
+					]`)))
+			})
+		})
+
+		Context("when the config contains public networks to exclude", func() {
+			BeforeEach(func() {
+				config = `
+excluded_networks:
+- 11.0.1.0/24
+`
 			})
 
-			Context("when the config contains private networks to blacklist", func() {
-				BeforeEach(func() {
-					config = `
-private_networks: true
+			It("should omit that network in the public-networks ASG", func() {
+				sess, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(sess).Should(gexec.Exit(0))
+
+				_, err = os.Lstat("public-networks.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				bs, err := ioutil.ReadFile("public-networks.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(bs).To(MatchJSON([]byte(`
+					[
+						{
+							"protocol": "all",
+							"destination": "0.0.0.0-9.255.255.255"
+						},
+						{
+							"protocol": "all",
+							"destination": "11.0.0.0-11.0.0.255"
+						},
+						{
+							"protocol": "all",
+							"destination": "11.0.2.0-169.254.169.253"
+						},
+						{
+							"protocol": "all",
+							"destination": "169.254.169.255-172.15.255.255"
+						},
+						{
+							"protocol": "all",
+							"destination": "172.32.0.0-192.167.255.255"
+						},
+						{
+							"protocol": "all",
+							"destination": "192.169.0.0-255.255.255.255"
+						}
+					]`)))
+			})
+		})
+
+		Context("when the config contains private IPs to exclude", func() {
+			BeforeEach(func() {
+				config = `
+excluded_ips:
+- 192.168.100.4
+- 192.168.100.8
+`
+			})
+
+			It("should create an ASG that skips those IPs", func() {
+				sess, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(sess).Should(gexec.Exit(0))
+
+				_, err = os.Lstat("private-networks.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				bs, err := ioutil.ReadFile("private-networks.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(bs).To(MatchJSON([]byte(`
+					[
+						{
+							"protocol": "all",
+							"destination": "10.0.0.0-10.255.255.255"
+						},
+						{
+							"protocol": "all",
+							"destination": "172.16.0.0-172.31.255.255"
+						},
+						{
+							"protocol": "all",
+							"destination": "192.168.0.0-192.168.100.3"
+						},
+						{
+							"protocol": "all",
+							"destination": "192.168.100.5-192.168.100.7"
+						},
+						{
+							"protocol": "all",
+							"destination": "192.168.100.9-192.168.255.255"
+						}
+					]`)))
+			})
+		})
+
+		Context("when the config contains public IPs to exclude", func() {
+			BeforeEach(func() {
+				config = `
+excluded_ips:
+- 11.0.0.5
+- 11.0.0.8
+`
+			})
+
+			It("should create an ASG that skips those IPs", func() {
+				sess, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(sess).Should(gexec.Exit(0))
+
+				_, err = os.Lstat("public-networks.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				bs, err := ioutil.ReadFile("public-networks.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(bs).To(MatchJSON([]byte(`
+				  [
+				  	{
+				  		"destination": "0.0.0.0-9.255.255.255",
+				  		"protocol": "all"
+				  	},
+				  	{
+				  		"destination": "11.0.0.0-11.0.0.4",
+				  		"protocol": "all"
+				  	},
+				  	{
+				  		"destination": "11.0.0.6-11.0.0.7",
+				  		"protocol": "all"
+				  	},
+				  	{
+				  		"destination": "11.0.0.9-169.254.169.253",
+				  		"protocol": "all"
+				  	},
+				  	{
+				  		"destination": "169.254.169.255-172.15.255.255",
+				  		"protocol": "all"
+				  	},
+				  	{
+				  		"destination": "172.32.0.0-192.167.255.255",
+				  		"protocol": "all"
+				  	},
+				  	{
+				  		"destination": "192.169.0.0-255.255.255.255",
+				  		"protocol": "all"
+				  	}
+				  ]`)))
+			})
+		})
+
+		Context("when the config contains both networks and IPs to exclude", func() {
+			BeforeEach(func() {
+				config = `
+excluded_ips:
+- 192.168.100.4
 excluded_networks:
 - 192.168.1.0/24
 `
-				})
-
-				It("should not include an ASG for that network", func() {
-					sess, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-					Expect(err).NotTo(HaveOccurred())
-
-					Eventually(sess).Should(gexec.Exit(0))
-
-					_, err = os.Lstat("private-networks.json")
-					Expect(err).NotTo(HaveOccurred())
-
-					bs, err := ioutil.ReadFile("private-networks.json")
-					Expect(err).NotTo(HaveOccurred())
-
-					Expect(bs).To(MatchJSON([]byte(`
-[
-  {
-    "protocol": "all",
-    "destination": "10.0.0.0-10.255.255.255"
-  },
-  {
-    "protocol": "all",
-    "destination": "172.16.0.0-172.31.255.255"
-  },
-  {
-    "protocol": "all",
-    "destination": "192.168.0.0-192.168.0.255"
-  },
-  {
-    "protocol": "all",
-    "destination": "192.168.2.0-192.168.255.255"
-  }
-]`)))
-				})
 			})
 
-			Context("when the config contains IPs to blacklist", func() {
-				BeforeEach(func() {
-					config = `
-private_networks: true
-excluded_ips:
-- 192.168.100.4
-`
-				})
+			It("should create an ASG that omits both", func() {
+				sess, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
 
-				It("should create an ASG that skips that IP", func() {
-					sess, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-					Expect(err).NotTo(HaveOccurred())
+				Eventually(sess).Should(gexec.Exit(0))
 
-					Eventually(sess).Should(gexec.Exit(0))
+				_, err = os.Lstat("private-networks.json")
+				Expect(err).NotTo(HaveOccurred())
 
-					_, err = os.Lstat("private-networks.json")
-					Expect(err).NotTo(HaveOccurred())
+				bs, err := ioutil.ReadFile("private-networks.json")
+				Expect(err).NotTo(HaveOccurred())
 
-					bs, err := ioutil.ReadFile("private-networks.json")
-					Expect(err).NotTo(HaveOccurred())
-
-					Expect(bs).To(MatchJSON([]byte(`
-[
-  {
-    "protocol": "all",
-    "destination": "10.0.0.0-10.255.255.255"
-  },
-  {
-    "protocol": "all",
-    "destination": "172.16.0.0-172.31.255.255"
-  },
-  {
-    "protocol": "all",
-    "destination": "192.168.0.0-192.168.100.3"
-  },
-  {
-    "protocol": "all",
-    "destination": "192.168.100.5-192.168.255.255"
-  }
-]`)))
-				})
+				Expect(bs).To(MatchJSON([]byte(`
+					[
+						{
+							"protocol": "all",
+							"destination": "10.0.0.0-10.255.255.255"
+						},
+						{
+							"protocol": "all",
+							"destination": "172.16.0.0-172.31.255.255"
+						},
+						{
+							"protocol": "all",
+							"destination": "192.168.0.0-192.168.0.255"
+						},
+						{
+							"protocol": "all",
+							"destination": "192.168.2.0-192.168.100.3"
+						},
+						{
+							"protocol": "all",
+							"destination": "192.168.100.5-192.168.255.255"
+						}
+					]`)))
 			})
-
-			Context("when the config contains both networks and IPs to blacklist", func() {
-				BeforeEach(func() {
-					config = `
-private_networks: true
-excluded_ips:
-- 192.168.100.4
-excluded_networks:
-- 192.168.1.0/24
-`
-				})
-
-				It("should create an ASG that skips both", func() {
-					sess, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-					Expect(err).NotTo(HaveOccurred())
-
-					Eventually(sess).Should(gexec.Exit(0))
-
-					_, err = os.Lstat("private-networks.json")
-					Expect(err).NotTo(HaveOccurred())
-
-					bs, err := ioutil.ReadFile("private-networks.json")
-					Expect(err).NotTo(HaveOccurred())
-
-					Expect(bs).To(MatchJSON([]byte(`
-[
-  {
-    "protocol": "all",
-    "destination": "10.0.0.0-10.255.255.255"
-  },
-  {
-    "protocol": "all",
-    "destination": "172.16.0.0-172.31.255.255"
-  },
-  {
-    "protocol": "all",
-    "destination": "192.168.0.0-192.168.0.255"
-  },
-  {
-    "protocol": "all",
-    "destination": "192.168.2.0-192.168.100.3"
-  },
-  {
-    "protocol": "all",
-    "destination": "192.168.100.5-192.168.255.255"
-  }
-]`)))
-				})
-			})
-		})
-	})
-
-	Context("when not given a configFile", func() {
-		BeforeEach(func() {
-			cmd = exec.Command(binPath, "create")
-		})
-
-		It("exits with error", func() {
-			sess, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-			Expect(err).NotTo(HaveOccurred())
-			Eventually(sess).Should(gexec.Exit(1))
 		})
 	})
 })

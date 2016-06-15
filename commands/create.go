@@ -11,41 +11,45 @@ import (
 )
 
 type CreateCommand struct {
-	Config flaghelpers.Path `long:"config" required:"true"`
+	Config flaghelpers.Path `long:"config" short:"c"`
 }
 
 func (c *CreateCommand) Execute(args []string) error {
 	configFile := c.Config
 
-	createConfig, err := config.LoadCreateConfig(string(configFile))
+	cfg := config.Create{}
+
+	if configFile != "" {
+		var err error
+		cfg, err = config.LoadCreateConfig(string(configFile))
+		if err != nil {
+			return err
+		}
+	}
+
+	publicRulesBytes, err := json.Marshal(cfg.PublicNetworksRules())
 	if err != nil {
 		return err
 	}
 
-	if createConfig.PublicNetworks {
-		rules := createConfig.PublicNetworksRules()
+	err = ioutil.WriteFile("public-networks.json", publicRulesBytes, os.ModePerm)
 
-		bs, err := json.Marshal(rules)
-		if err != nil {
-			return err
-		}
-
-		fmt.Fprintln(os.Stdout, "Wrote public-networks.json\n")
-
-		ioutil.WriteFile("public-networks.json", bs, os.ModePerm)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to write public-networks.json: %s\n", err.Error()))
+	} else {
+		fmt.Fprintln(os.Stdout, "Wrote public-networks.json")
 	}
 
-	if createConfig.PrivateNetworks {
-		rules := createConfig.PrivateNetworksRules()
+	privateRulesBytes, err := json.Marshal(cfg.PrivateNetworksRules())
+	if err != nil {
+		return err
+	}
 
-		bs, err := json.Marshal(rules)
-		if err != nil {
-			return err
-		}
-
-		fmt.Fprintln(os.Stdout, "Wrote private-networks.json\n")
-
-		ioutil.WriteFile("private-networks.json", bs, os.ModePerm)
+	err = ioutil.WriteFile("private-networks.json", privateRulesBytes, os.ModePerm)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to write private-networks.json: %s\n", err.Error()))
+	} else {
+		fmt.Fprintln(os.Stdout, "Wrote private-networks.json")
 	}
 
 	fmt.Fprintln(os.Stdout, "OK")

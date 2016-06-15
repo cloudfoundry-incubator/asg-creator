@@ -12,16 +12,12 @@ go get github.com/cloudfoundry-incubator/asg-creator
 
 Options
 
-* *private_networks*: Set to `true` to write out all private networks less any blacklisted IPs/networks
-* *public_networks*: Set to `true` to write out all public networks less any blacklisted IPs/networks
 * *excluded_ips*: An array of IPs to exclude
 * *excluded_networks*: An array of CIDRs to exclude
 
 Create a config:
 
 ```yaml
-private_networks: true
-
 excluded_ips:
 - 192.168.100.4
 
@@ -33,10 +29,11 @@ Use the config to create ASG configuration files:
 
 ```
 $ asg-creator create --config config.yml
+Wrote public-networks.json
 Wrote private-networks.json
 
 OK
-$ cat private-networks.json
+$ cat private-networks.json | jq '.'
 [
   {
     "protocol": "all",
@@ -59,10 +56,35 @@ $ cat private-networks.json
     "destination": "192.168.100.5-192.168.255.255"
   }
 ]
+
+$ cat public-networks.json | jq '.'
+[
+  {
+    "protocol": "all",
+    "destination": "0.0.0.0-9.255.255.255"
+  },
+  {
+    "protocol": "all",
+    "destination": "11.0.0.0-169.254.169.253"
+  },
+  {
+    "protocol": "all",
+    "destination": "169.254.169.255-172.15.255.255"
+  },
+  {
+    "protocol": "all",
+    "destination": "172.32.0.0-192.167.255.255"
+  },
+  {
+    "protocol": "all",
+    "destination": "192.169.0.0-255.255.255.255"
+  }
+]
 ```
 
 Use the configuration files to create ASGs:
 
 ```
-$ cf create-security-group my-security-group private-networks.json
+$ cf create-security-group private-networks private-networks.json
+$ cf create-security-group public-networks public-networks.json
 ```

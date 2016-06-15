@@ -17,8 +17,6 @@ var blacklistedIPs = []net.IP{
 }
 
 type Create struct {
-	PublicNetworks   bool     `yaml:"public_networks"`
-	PrivateNetworks  bool     `yaml:"private_networks"`
 	ExcludedNetworks []string `yaml:"excluded_networks"`
 	ExcludedIPs      []string `yaml:"excluded_ips"`
 }
@@ -86,19 +84,12 @@ func (c *Create) ipFilter(ipRanges <-chan iptools.IPRange) <-chan iptools.IPRang
 	out := make(chan iptools.IPRange)
 	go func() {
 		for ipRange := range ipRanges {
-			if len(c.ExcludedIPs) == 0 {
-				out <- ipRange
-				continue
+			var ips []net.IP
+			for i := range c.ExcludedIPs {
+				ips = append(ips, net.ParseIP(c.ExcludedIPs[i]))
 			}
-			for _, excludedIP := range c.ExcludedIPs {
-				ip := net.ParseIP(excludedIP)
-				if ipRange.Contains(ip) {
-					for _, newRange := range ipRange.SliceIP(ip) {
-						out <- newRange
-					}
-				} else {
-					out <- ipRange
-				}
+			for _, newRange := range ipRange.SliceIPs(ips) {
+				out <- newRange
 			}
 		}
 		close(out)
@@ -110,14 +101,8 @@ func (c *Create) blacklistedIPFilter(ipRanges <-chan iptools.IPRange) <-chan ipt
 	out := make(chan iptools.IPRange)
 	go func() {
 		for ipRange := range ipRanges {
-			for _, blacklistedIP := range blacklistedIPs {
-				if ipRange.Contains(blacklistedIP) {
-					for _, newRange := range ipRange.SliceIP(blacklistedIP) {
-						out <- newRange
-					}
-				} else {
-					out <- ipRange
-				}
+			for _, newRange := range ipRange.SliceIPs(blacklistedIPs) {
+				out <- newRange
 			}
 		}
 		close(out)
