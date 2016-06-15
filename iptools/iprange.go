@@ -43,15 +43,22 @@ func (r *IPRange) SliceIPs(ips []net.IP) []IPRange {
 	return ipRanges
 }
 
+func (r *IPRange) StartsAt(ip net.IP) bool {
+	return bytes.Compare(r.Start, ip) == 0
+}
+
+func (r *IPRange) EndsAt(ip net.IP) bool {
+	return bytes.Compare(r.End, ip) == 0
+}
+
 func (r *IPRange) SliceIP(ip net.IP) []IPRange {
 	if !r.Contains(ip) {
 		return []IPRange{*r}
 	}
 
-	oneLess := Dec(ip)
 	oneMore := Inc(ip)
 
-	if bytes.Compare(r.Start, ip) == 0 {
+	if r.StartsAt(ip) {
 		return []IPRange{
 			{
 				Start: oneMore,
@@ -60,7 +67,9 @@ func (r *IPRange) SliceIP(ip net.IP) []IPRange {
 		}
 	}
 
-	if bytes.Compare(r.End, ip) == 0 {
+	oneLess := Dec(ip)
+
+	if r.EndsAt(ip) {
 		return []IPRange{
 			{
 				Start: r.Start,
@@ -72,10 +81,10 @@ func (r *IPRange) SliceIP(ip net.IP) []IPRange {
 	return []IPRange{
 		{
 			Start: r.Start,
-			End:   net.IP(oneLess),
+			End:   oneLess,
 		},
 		{
-			Start: net.IP(oneMore),
+			Start: oneMore,
 			End:   r.End,
 		},
 	}
