@@ -51,7 +51,7 @@ $ asg-creator create --config config.yml
 Wrote public-networks.json
 Wrote private-networks.json
 OK
-$ cat private-networks.json | jq '.'
+$ jq '.' < private-networks.json
 [
   {
     "protocol": "all",
@@ -75,7 +75,7 @@ $ cat private-networks.json | jq '.'
   }
 ]
 
-$ cat public-networks.json | jq '.'
+$ jq '.' < public-networks.json
 [
   {
     "protocol": "all",
