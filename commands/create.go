@@ -15,13 +15,11 @@ type CreateCommand struct {
 }
 
 func (c *CreateCommand) Execute(args []string) error {
-	configFile := c.Config
-
 	cfg := config.Create{}
 
-	if configFile != "" {
+	if c.Config != "" {
 		var err error
-		cfg, err = config.LoadCreateConfig(string(configFile))
+		cfg, err = config.LoadCreateConfig(string(c.Config))
 		if err != nil {
 			return err
 		}
