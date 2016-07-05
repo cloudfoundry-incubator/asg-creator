@@ -8,8 +8,7 @@ import (
 
 	"github.com/cloudfoundry-incubator/asg-creator/asg"
 	"github.com/cloudfoundry-incubator/asg-creator/iptools"
-
-	"gopkg.in/yaml.v2"
+	"github.com/cloudfoundry-incubator/candiedyaml"
 )
 
 var blacklistedIPs = []net.IP{
@@ -28,7 +27,7 @@ func LoadCreateConfig(path string) (Create, error) {
 		return Create{}, err
 	}
 
-	err = yaml.Unmarshal(bs, createConfig)
+	err = candiedyaml.Unmarshal(bs, createConfig)
 	if err != nil {
 		return Create{}, err
 	}
