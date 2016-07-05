@@ -1,0 +1,4 @@
+package: github.com/cloudfoundry-incubator/asg-creator
+import:
+- package: github.com/cloudfoundry-incubator/candiedyaml
+- package: github.com/jessevdk/go-flags

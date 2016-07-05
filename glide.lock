@@ -1,0 +1,8 @@
+hash: 51aecee657520832bbe1efdcf103bc9b10db5e7662fa5ae1578f7fd213fe6e29
+updated: 2016-07-05T11:40:23.585114488-07:00
+imports:
+- name: github.com/cloudfoundry-incubator/candiedyaml
+  version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
+- name: github.com/jessevdk/go-flags
+  version: f2785f5820ec967043de79c8be97edfc464ca745
+testImports: []
