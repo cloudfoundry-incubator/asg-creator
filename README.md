@@ -51,52 +51,52 @@ $ asg-creator create --config config.yml
 Wrote public-networks.json
 Wrote private-networks.json
 OK
-$ jq '.' < private-networks.json
+$ cat private-networks.json
 [
-  {
-    "protocol": "all",
-    "destination": "10.0.0.0-10.255.255.255"
-  },
-  {
-    "protocol": "all",
-    "destination": "172.16.0.0-172.31.255.255"
-  },
-  {
-    "protocol": "all",
-    "destination": "192.168.0.0-192.168.0.255"
-  },
-  {
-    "protocol": "all",
-    "destination": "192.168.2.0-192.168.100.3"
-  },
-  {
-    "protocol": "all",
-    "destination": "192.168.100.5-192.168.255.255"
-  }
+	{
+		"protocol": "all",
+		"destination": "10.0.0.0-10.255.255.255"
+	},
+	{
+		"protocol": "all",
+		"destination": "172.16.0.0-172.31.255.255"
+	},
+	{
+		"protocol": "all",
+		"destination": "192.168.0.0-192.168.0.255"
+	},
+	{
+		"protocol": "all",
+		"destination": "192.168.2.0-192.168.100.3"
+	},
+	{
+		"protocol": "all",
+		"destination": "192.168.100.5-192.168.255.255"
+	}
 ]
 
-$ jq '.' < public-networks.json
+$ cat public-networks.json
 [
-  {
-    "protocol": "all",
-    "destination": "0.0.0.0-9.255.255.255"
-  },
-  {
-    "protocol": "all",
-    "destination": "11.0.0.0-169.254.169.253"
-  },
-  {
-    "protocol": "all",
-    "destination": "169.254.169.255-172.15.255.255"
-  },
-  {
-    "protocol": "all",
-    "destination": "172.32.0.0-192.167.255.255"
-  },
-  {
-    "protocol": "all",
-    "destination": "192.169.0.0-255.255.255.255"
-  }
+	{
+		"protocol": "all",
+		"destination": "0.0.0.0-9.255.255.255"
+	},
+	{
+		"protocol": "all",
+		"destination": "11.0.0.0-169.254.169.253"
+	},
+	{
+		"protocol": "all",
+		"destination": "169.254.169.255-172.15.255.255"
+	},
+	{
+		"protocol": "all",
+		"destination": "172.32.0.0-192.167.255.255"
+	},
+	{
+		"protocol": "all",
+		"destination": "192.169.0.0-255.255.255.255"
+	}
 ]
 ```
 
