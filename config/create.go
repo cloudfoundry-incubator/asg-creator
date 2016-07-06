@@ -60,11 +60,11 @@ func (c *Create) PrivateNetworksRules() []asg.Rule {
 	return c.rulesForRanges(ipRanges)
 }
 
-func (c *Create) rulesForRanges(ipRanges chan iptools.IPRange) []asg.Rule {
+func (c *Create) rulesForRanges(ipRangesCh chan iptools.IPRange) []asg.Rule {
 	var rules []asg.Rule
 
-	filteredIPRanges := c.blacklistedIPFilter(c.ipFilter(c.networkFilter(ipRanges)))
-	for ipRange := range filteredIPRanges {
+	ipRanges := c.blacklistedIPFilter(c.ipFilter(c.networkFilter(ipRangesCh)))
+	for ipRange := range ipRanges {
 		rules = append(rules, asg.Rule{
 			Destination: ipRange.String(),
 			Protocol:    protocolAll,
