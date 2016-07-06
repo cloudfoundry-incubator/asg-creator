@@ -10,6 +10,8 @@ import (
 	"github.com/cloudfoundry-incubator/candiedyaml"
 )
 
+const protocolAll = "all"
+
 var blacklistedIPs = []net.IP{
 	{169, 254, 169, 254},
 }
@@ -35,8 +37,6 @@ func LoadCreateConfig(path string) (Create, error) {
 }
 
 func (c *Create) PublicNetworksRules() []asg.Rule {
-	var rules []asg.Rule
-
 	ipRanges := make(chan iptools.IPRange)
 	go func() {
 		for _, ipRange := range iptools.PublicIPRanges() {
@@ -45,20 +45,10 @@ func (c *Create) PublicNetworksRules() []asg.Rule {
 		close(ipRanges)
 	}()
 
-	filteredIPRanges := c.blacklistedIPFilter(c.ipFilter(c.networkFilter(ipRanges)))
-	for ipRange := range filteredIPRanges {
-		rules = append(rules, asg.Rule{
-			Destination: fmt.Sprintf("%s-%s", ipRange.Start, ipRange.End),
-			Protocol:    "all",
-		})
-	}
-
-	return rules
+	return c.rulesForRanges(ipRanges)
 }
 
 func (c *Create) PrivateNetworksRules() []asg.Rule {
-	var rules []asg.Rule
-
 	ipRanges := make(chan iptools.IPRange)
 	go func() {
 		for _, ipNet := range iptools.PrivateIPNets() {
@@ -67,11 +57,17 @@ func (c *Create) PrivateNetworksRules() []asg.Rule {
 		close(ipRanges)
 	}()
 
+	return c.rulesForRanges(ipRanges)
+}
+
+func (c *Create) rulesForRanges(ipRanges chan iptools.IPRange) []asg.Rule {
+	var rules []asg.Rule
+
 	filteredIPRanges := c.blacklistedIPFilter(c.ipFilter(c.networkFilter(ipRanges)))
 	for ipRange := range filteredIPRanges {
 		rules = append(rules, asg.Rule{
-			Destination: fmt.Sprintf("%s-%s", ipRange.Start, ipRange.End),
-			Protocol:    "all",
+			Destination: ipRange.String(),
+			Protocol:    protocolAll,
 		})
 	}
 
