@@ -352,5 +352,52 @@ excluded_networks:
 					]`)))
 			})
 		})
+
+		Context("when the config is such that it expects a rule with a single IP", func() {
+			BeforeEach(func() {
+				config = `
+excluded_ips:
+- 192.168.100.4
+- 192.168.100.6
+`
+			})
+
+			It("should create a rule with a single IP", func() {
+				sess, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(sess).Should(gexec.Exit(0))
+
+				_, err = os.Lstat("private-networks.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				bs, err := ioutil.ReadFile("private-networks.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(bs).To(MatchJSON([]byte(`
+					[
+						{
+							"protocol": "all",
+							"destination": "10.0.0.0-10.255.255.255"
+						},
+						{
+							"protocol": "all",
+							"destination": "172.16.0.0-172.31.255.255"
+						},
+						{
+							"protocol": "all",
+							"destination": "192.168.0.0-192.168.100.3"
+						},
+						{
+							"protocol": "all",
+							"destination": "192.168.100.5"
+						},
+						{
+							"protocol": "all",
+							"destination": "192.168.100.7-192.168.255.255"
+						}
+					]`)))
+			})
+		})
 	})
 })

@@ -2,6 +2,7 @@ package iptools
 
 import (
 	"bytes"
+	"fmt"
 	"net"
 )
 
@@ -16,6 +17,14 @@ func NewIPRangeFromIPNet(ipNet *net.IPNet) IPRange {
 		Start: min,
 		End:   max,
 	}
+}
+
+func (r *IPRange) String() string {
+	if r.End == nil {
+		return r.Start.String()
+	}
+
+	return fmt.Sprintf("%s-%s", r.Start, r.End)
 }
 
 func (r *IPRange) Contains(ip net.IP) bool {
@@ -78,14 +87,30 @@ func (r *IPRange) SliceIP(ip net.IP) []IPRange {
 		}
 	}
 
-	return []IPRange{
-		{
+	a := IPRange{
+		Start: r.Start,
+		End:   oneLess,
+	}
+
+	b := IPRange{
+		Start: oneMore,
+		End:   r.End,
+	}
+
+	if bytes.Compare(r.Start.To4(), oneLess.To4()) == 0 {
+		a = IPRange{
 			Start: r.Start,
-			End:   oneLess,
-		},
-		{
-			Start: oneMore,
-			End:   r.End,
-		},
+		}
+	}
+
+	if bytes.Compare(r.End.To4(), oneMore.To4()) == 0 {
+		b = IPRange{
+			Start: r.Start,
+		}
+	}
+
+	return []IPRange{
+		a,
+		b,
 	}
 }
