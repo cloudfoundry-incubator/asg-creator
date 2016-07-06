@@ -78,6 +78,11 @@ func (c *Create) ipFilter(ipRanges <-chan iptools.IPRange) <-chan iptools.IPRang
 	out := make(chan iptools.IPRange)
 	go func() {
 		for ipRange := range ipRanges {
+			if len(c.ExcludedIPs) == 0 {
+				out <- ipRange
+				continue
+			}
+
 			var ips []net.IP
 			for i := range c.ExcludedIPs {
 				ips = append(ips, net.ParseIP(c.ExcludedIPs[i]))
