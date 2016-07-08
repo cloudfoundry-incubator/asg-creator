@@ -65,45 +65,41 @@ func (r *IPRange) SliceIP(ip net.IP) []IPRange {
 		return []IPRange{*r}
 	}
 
-	oneMore := Inc(ip)
-
 	if r.StartsAt(ip) {
 		return []IPRange{
 			{
-				Start: oneMore,
+				Start: Inc(ip),
 				End:   r.End,
 			},
 		}
 	}
 
-	oneLess := Dec(ip)
-
 	if r.EndsAt(ip) {
 		return []IPRange{
 			{
 				Start: r.Start,
-				End:   oneLess,
+				End:   Dec(ip),
 			},
 		}
 	}
 
 	a := IPRange{
 		Start: r.Start,
-		End:   oneLess,
+		End:   Dec(ip),
 	}
 
 	b := IPRange{
-		Start: oneMore,
+		Start: Inc(ip),
 		End:   r.End,
 	}
 
-	if bytes.Compare(r.Start.To4(), oneLess.To4()) == 0 {
+	if bytes.Compare(r.Start.To4(), Dec(ip).To4()) == 0 {
 		a = IPRange{
 			Start: r.Start,
 		}
 	}
 
-	if bytes.Compare(r.End.To4(), oneMore.To4()) == 0 {
+	if bytes.Compare(r.End.To4(), Inc(ip).To4()) == 0 {
 		b = IPRange{
 			Start: r.Start,
 		}
