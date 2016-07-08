@@ -432,8 +432,10 @@ included_networks:
 - 10.68.192.0/24
 
 excluded_ips:
+- 10.68.192.0
 - 10.68.192.127
 - 10.68.192.128
+- 10.68.192.255
 `
 			})
 
@@ -449,17 +451,16 @@ excluded_ips:
 				bs, err := ioutil.ReadFile(outputFile.Name())
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(bs).To(MatchJSON([]byte(`
-			[
+				Expect(bs).To(MatchJSON([]byte(`[
 					{
 							"protocol": "all",
-							"destination": "10.68.192.0-10.68.192.126"
+							"destination": "10.68.192.1-10.68.192.126"
 					},
 					{
 							"protocol": "all",
-							"destination": "10.68.192.129-10.68.192.255"
+							"destination": "10.68.192.129-10.68.192.254"
 					}
-			]`)))
+				]`)))
 			})
 		})
 	})

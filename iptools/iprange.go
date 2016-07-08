@@ -53,11 +53,11 @@ func (r *IPRange) SliceIPs(ips []net.IP) []IPRange {
 }
 
 func (r *IPRange) StartsAt(ip net.IP) bool {
-	return bytes.Compare(r.Start, ip) == 0
+	return bytes.Compare(r.Start.To4(), ip.To4()) == 0
 }
 
 func (r *IPRange) EndsAt(ip net.IP) bool {
-	return bytes.Compare(r.End, ip) == 0
+	return bytes.Compare(r.End.To4(), ip.To4()) == 0
 }
 
 func (r *IPRange) SliceIP(ip net.IP) []IPRange {
