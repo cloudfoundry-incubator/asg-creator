@@ -39,6 +39,43 @@ Config Options
 * *excluded_networks*: An array of CIDRs to exclude; all IPs in these networks will be omitted from the baseline ASG rules
 * *included_networks*: An array of CIDRs to use as the base from which to remove IPs from
 
+### Creating ASG rules based on a provided list of networks
+
+To create ASG rules starting with a specific set of networks and then subtracting IPs from them, create a config, `config.yaml`:
+
+```yaml
+included_networks:
+- 10.68.192.0/24
+
+excluded_ips:
+- 10.68.192.0
+- 10.68.192.127
+- 10.68.192.128
+- 10.68.192.255
+```
+
+Use the config, specifying a custom output filename, to create an ASG rules file:
+
+```
+$ asg-creator create --config config.yml --output custom.json
+Wrote custom.json
+OK
+$ cat custom.json
+[
+    {
+        "protocol": "all",
+        "destination": "10.68.192.1-10.68.192.126"
+    },
+    {
+        "protocol": "all",
+        "destination": "10.68.192.129-10.68.192.254"
+    }
+]
+```
+
+
+### Creating ASGs for default-staging and default-running
+
 To create `public-networks.json` and `private-networks.json`, where each file contains all public or private networks respectively, except for specific IPs and networks that are configured, create a config, `config.yml`:
 
 ```yaml
@@ -102,38 +139,6 @@ $ cat public-networks.json
 		"protocol": "all",
 		"destination": "192.169.0.0-255.255.255.255"
 	}
-]
-```
-
-Alternatively, to create ASG rules starting with a specific set of networks and then subtracting IPs from them, create a config, `config.yaml`:
-
-```yaml
-included_networks:
-- 10.68.192.0/24
-
-excluded_ips:
-- 10.68.192.0
-- 10.68.192.127
-- 10.68.192.128
-- 10.68.192.255
-```
-
-Use the config, specifying a custom output filename, to create an ASG rules file:
-
-```
-$ asg-creator create --config config.yml --output custom.json
-Wrote custom.json
-OK
-$ cat custom.json
-[
-    {
-        "protocol": "all",
-        "destination": "10.68.192.1-10.68.192.126"
-    },
-    {
-        "protocol": "all",
-        "destination": "10.68.192.129-10.68.192.254"
-    }
 ]
 ```
 
