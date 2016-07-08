@@ -23,6 +23,10 @@ needs.
 
 ## Installation
 
+Download the [latest release](https://github.com/cloudfoundry-incubator/asg-creator/releases/latest).
+
+Alternatively, install from source:
+
 ```
 go get github.com/cloudfoundry-incubator/asg-creator
 ```
