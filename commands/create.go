@@ -50,7 +50,7 @@ func (c *CreateCommand) Execute(args []string) error {
 
 		err = writeFile("public-networks.json", publicRulesBytes)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
+			return err
 		}
 
 		privateRulesBytes, err := rulesBytes(cfg.PrivateNetworksRules())
@@ -60,7 +60,7 @@ func (c *CreateCommand) Execute(args []string) error {
 
 		err = writeFile("private-networks.json", privateRulesBytes)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
+			return err
 		}
 	}
 
