@@ -400,4 +400,67 @@ excluded_ips:
 			})
 		})
 	})
+
+	Context("when given a config and an output file", func() {
+		var configFile *os.File
+		var outputFile *os.File
+		var config string
+
+		JustBeforeEach(func() {
+			var err error
+			configFile, err = ioutil.TempFile("", "")
+			Expect(err).NotTo(HaveOccurred())
+
+			err = ioutil.WriteFile(configFile.Name(), []byte(config), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+
+			outputFile, err = ioutil.TempFile("", "")
+			Expect(err).NotTo(HaveOccurred())
+
+			cmd = exec.Command(binPath, "create", "--config", configFile.Name(), "--output", outputFile.Name())
+		})
+
+		AfterEach(func() {
+			os.RemoveAll(configFile.Name())
+			os.RemoveAll(outputFile.Name())
+		})
+
+		Context("when the config contains networks to include", func() {
+			BeforeEach(func() {
+				config = `
+included_networks:
+- 10.68.192.0/24
+
+excluded_ips:
+- 10.68.192.127
+- 10.68.192.128
+`
+			})
+
+			It("should create rules that only include that network", func() {
+				sess, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(sess).Should(gexec.Exit(0))
+
+				_, err = os.Lstat(outputFile.Name())
+				Expect(err).NotTo(HaveOccurred())
+
+				bs, err := ioutil.ReadFile(outputFile.Name())
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(bs).To(MatchJSON([]byte(`
+			[
+					{
+							"protocol": "all",
+							"destination": "10.68.192.0-10.68.192.126"
+					},
+					{
+							"protocol": "all",
+							"destination": "10.68.192.129-10.68.192.255"
+					}
+			]`)))
+			})
+		})
+	})
 })

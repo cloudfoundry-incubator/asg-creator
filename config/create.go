@@ -17,6 +17,7 @@ var blacklistedIPs = []net.IP{
 }
 
 type Create struct {
+	IncludedNetworks []string `yaml:"included_networks"`
 	ExcludedNetworks []string `yaml:"excluded_networks"`
 	ExcludedIPs      []string `yaml:"excluded_ips"`
 }
@@ -34,6 +35,25 @@ func LoadCreateConfig(path string) (Create, error) {
 	}
 
 	return *createConfig, nil
+}
+
+func (c *Create) IncludedNetworksRules() []asg.Rule {
+	ipRanges := make(chan iptools.IPRange)
+	go func() {
+		for i := range c.IncludedNetworks {
+			_, ipNet, err := net.ParseCIDR(c.IncludedNetworks[i])
+			if err != nil {
+				log.Fatalf("non-CIDR given as included network in config: %s", c.IncludedNetworks[i])
+			}
+			min, max := iptools.NetworkRange(ipNet)
+			ipRanges <- iptools.IPRange{
+				Start: min,
+				End:   max,
+			}
+		}
+		close(ipRanges)
+	}()
+	return c.rulesForRanges(ipRanges)
 }
 
 func (c *Create) PublicNetworksRules() []asg.Rule {

@@ -28,7 +28,7 @@ func (r *IPRange) String() string {
 }
 
 func (r *IPRange) Contains(ip net.IP) bool {
-	return bytes.Compare(r.Start.To4(), ip.To4()) == -1 && bytes.Compare(ip.To4(), r.End.To4()) == -1
+	return bytes.Compare(r.Start.To4(), ip.To4()) <= 0 && bytes.Compare(ip.To4(), r.End.To4()) <= 0
 }
 
 func (r *IPRange) OverlapsNet(ipNet *net.IPNet) bool {
