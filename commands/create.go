@@ -38,26 +38,19 @@ func (c *CreateCommand) Execute(args []string) error {
 			return err
 		}
 
-		err = ioutil.WriteFile(string(c.OutputPath), networkRulesBytes, os.ModePerm)
+		err = writeFile(c.OutputPath, networkRulesBytes)
 		if err != nil {
 			return err
 		}
-		if err != nil {
-			return fmt.Errorf("Failed to write %s: %s\n", c.OutputPath, err.Error())
-		}
-
-		fmt.Fprintln(os.Stdout, fmt.Sprintf("Wrote %s", c.OutputPath))
 	} else {
 		publicRulesBytes, err := rulesBytes(cfg.PublicNetworksRules())
 		if err != nil {
 			return err
 		}
 
-		err = ioutil.WriteFile("public-networks.json", publicRulesBytes, os.ModePerm)
+		err = writeFile("public-networks.json", publicRulesBytes)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to write public-networks.json: %s\n", err.Error()))
-		} else {
-			fmt.Fprintln(os.Stdout, "Wrote public-networks.json")
+			fmt.Fprintln(os.Stderr, err.Error())
 		}
 
 		privateRulesBytes, err := rulesBytes(cfg.PrivateNetworksRules())
@@ -65,16 +58,23 @@ func (c *CreateCommand) Execute(args []string) error {
 			return err
 		}
 
-		err = ioutil.WriteFile("private-networks.json", privateRulesBytes, os.ModePerm)
+		err = writeFile("private-networks.json", privateRulesBytes)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to write private-networks.json: %s\n", err.Error()))
-		} else {
-			fmt.Fprintln(os.Stdout, "Wrote private-networks.json")
+			fmt.Fprintln(os.Stderr, err.Error())
 		}
 	}
 
 	fmt.Fprintln(os.Stdout, "OK")
 
+	return nil
+}
+
+func writeFile(filepath string, filebytes []byte) error {
+	err := ioutil.WriteFile(filepath, filebytes, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf(fmt.Sprintf("Failed to write private-networks.json: %s\n", err.Error()))
+	}
+	fmt.Printf("Wrote %s", filepath)
 	return nil
 }
 
