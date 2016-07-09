@@ -75,4 +75,119 @@ var _ = Describe("IPRange", func() {
 			})
 		})
 	})
+
+	Describe("SliceIP", func() {
+		var (
+			ip     net.IP
+			result []iptools.IPRange
+		)
+
+		var ipRange = iptools.IPRange{
+			Start: net.IP{10, 10, 1, 0},
+			End:   net.IP{10, 10, 1, 255},
+		}
+
+		JustBeforeEach(func() {
+			result = ipRange.SliceIP(ip)
+		})
+
+		Context("when the IP is not in the range", func() {
+			BeforeEach(func() {
+				ip = net.IP{10, 10, 2, 0}
+			})
+
+			It("returns a slice of the original range", func() {
+				Expect(result).To(Equal([]iptools.IPRange{ipRange}))
+			})
+		})
+
+		Context("when the IP is the start of the IPRange", func() {
+			BeforeEach(func() {
+				ip = net.IP{10, 10, 1, 0}
+			})
+
+			It("returns a single slice", func() {
+				Expect(result).To(Equal([]iptools.IPRange{
+					iptools.IPRange{
+						Start: net.IP{10, 10, 1, 1},
+						End:   net.IP{10, 10, 1, 255},
+					},
+				}))
+			})
+		})
+
+		Context("when the IP is the end of the IPRange", func() {
+			BeforeEach(func() {
+				ip = net.IP{10, 10, 1, 255}
+			})
+
+			It("returns a single slice", func() {
+				Expect(result).To(Equal([]iptools.IPRange{
+					iptools.IPRange{
+						Start: net.IP{10, 10, 1, 0},
+						End:   net.IP{10, 10, 1, 254},
+					},
+				}))
+			})
+		})
+
+		Context("when the range only contains two IPs, and the first is being sliced out", func() {
+			BeforeEach(func() {
+				ipRange = iptools.IPRange{
+					Start: net.IP{10, 10, 1, 0},
+					End:   net.IP{10, 10, 1, 1},
+				}
+				ip = net.IP{10, 10, 1, 0}
+			})
+
+			It("returns a single slice with no End", func() {
+				Expect(result).To(Equal([]iptools.IPRange{
+					iptools.IPRange{
+						Start: net.IP{10, 10, 1, 1},
+					},
+				}))
+			})
+		})
+
+		Context("when the range only contains two IPs, and the last is being sliced out", func() {
+			BeforeEach(func() {
+				ipRange = iptools.IPRange{
+					Start: net.IP{10, 10, 1, 0},
+					End:   net.IP{10, 10, 1, 1},
+				}
+				ip = net.IP{10, 10, 1, 1}
+			})
+
+			It("returns a single slice with no End", func() {
+				Expect(result).To(Equal([]iptools.IPRange{
+					iptools.IPRange{
+						Start: net.IP{10, 10, 1, 0},
+					},
+				}))
+			})
+		})
+
+		Context("when the IP is in the IPRange", func() {
+			BeforeEach(func() {
+				ipRange = iptools.IPRange{
+					Start: net.IP{10, 10, 1, 0},
+					End:   net.IP{10, 10, 1, 255},
+				}
+				ip = net.IP{10, 10, 1, 5}
+			})
+
+			It("returns two slices", func() {
+				Expect(result).To(Equal([]iptools.IPRange{
+					iptools.IPRange{
+						Start: net.IP{10, 10, 1, 0},
+						End:   net.IP{10, 10, 1, 4},
+					},
+					iptools.IPRange{
+						Start: net.IP{10, 10, 1, 6},
+						End:   net.IP{10, 10, 1, 255},
+					},
+				}))
+			})
+		})
+	})
 })
