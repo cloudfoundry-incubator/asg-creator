@@ -109,23 +109,28 @@ func SliceNetFromRange(ipRange IPRange, ipNet *net.IPNet) []IPRange {
 		return []IPRange{ipRange}
 	}
 
+	if ipRange.EqualsNet(ipNet) {
+		return []IPRange{}
+	}
+
+	rangeStart := ipRange.Start.To4()
+	rangeEnd := ipRange.End.To4()
+
 	min, max := NetworkRange(ipNet)
+	netMin := min.To4()
+	netMax := max.To4()
 
 	var ipRanges []IPRange
-	var minusOne net.IP
-	if bytes.Compare(ipRange.Start, min) == -1 && bytes.Compare(min, ipRange.End) == -1 {
-		minusOne = Dec(min)
+	if bytes.Compare(rangeStart, netMin) == -1 {
 		ipRanges = append(ipRanges, IPRange{
 			Start: ipRange.Start,
-			End:   minusOne,
+			End:   Dec(min),
 		})
 	}
 
-	var plusOne net.IP
-	if bytes.Compare(ipRange.Start, max) == -1 && bytes.Compare(max, ipRange.End) == -1 {
-		plusOne = Inc(max)
+	if bytes.Compare(rangeEnd, netMax) == 1 {
 		ipRanges = append(ipRanges, IPRange{
-			Start: plusOne,
+			Start: Inc(max),
 			End:   ipRange.End,
 		})
 	}

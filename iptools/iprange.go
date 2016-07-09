@@ -37,6 +37,11 @@ func (r *IPRange) OverlapsNet(ipNet *net.IPNet) bool {
 		r.Contains(min) || r.Contains(max)
 }
 
+func (r *IPRange) EqualsNet(ipNet *net.IPNet) bool {
+	min, max := NetworkRange(ipNet)
+	return r.Start.Equal(min) && r.End.Equal(max)
+}
+
 func (r *IPRange) OverlapsRange(other IPRange) bool {
 	return other.Contains(r.Start) || other.Contains(r.End) ||
 		r.Contains(other.Start) || r.Contains(other.End)
