@@ -140,7 +140,7 @@ var _ = Describe("IPRange", func() {
 				ip = net.IP{10, 10, 1, 0}
 			})
 
-			It("returns a single slice with no End", func() {
+			XIt("returns a single slice with no End", func() {
 				Expect(result).To(Equal([]iptools.IPRange{
 					iptools.IPRange{
 						Start: net.IP{10, 10, 1, 1},
@@ -158,7 +158,7 @@ var _ = Describe("IPRange", func() {
 				ip = net.IP{10, 10, 1, 1}
 			})
 
-			It("returns a single slice with no End", func() {
+			XIt("returns a single slice with no End", func() {
 				Expect(result).To(Equal([]iptools.IPRange{
 					iptools.IPRange{
 						Start: net.IP{10, 10, 1, 0},
