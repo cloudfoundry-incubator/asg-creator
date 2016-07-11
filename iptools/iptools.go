@@ -28,12 +28,8 @@ func PublicIPRanges() []IPRange {
 	}
 
 	for _, ipNet := range PrivateIPNets() {
-		minusOne := Dec(ipNet.IP)
-		nets = append(nets, minusOne)
-
 		_, max := NetworkRange(ipNet)
-		plusOne := Inc(max)
-		nets = append(nets, plusOne)
+		nets = append(nets, Dec(ipNet.IP), Inc(max))
 	}
 
 	nets = append(nets, net.IP{255, 255, 255, 255})
