@@ -99,8 +99,8 @@ var _ = Describe("iptools", func() {
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			It("returns an empty slice of IPRange", func() {
-				Expect(result).To(HaveLen(0))
+			It("returns nil", func() {
+				Expect(result).To(BeNil())
 			})
 		})
 	})

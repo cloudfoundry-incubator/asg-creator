@@ -106,7 +106,7 @@ func SliceNetFromRange(ipRange IPRange, ipNet *net.IPNet) []IPRange {
 	}
 
 	if ipRange.EqualsNet(ipNet) {
-		return []IPRange{}
+		return nil
 	}
 
 	rangeStart := ipRange.Start.To4()
