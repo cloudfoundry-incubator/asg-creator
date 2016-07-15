@@ -34,26 +34,22 @@ go get github.com/cloudfoundry-incubator/asg-creator
 
 Config Options
 
-* *excluded_ips*: An array of IPs to exclude; these IPs will be omitted from the baseline ASG rules
-* *excluded_ranges*: An array of IP Ranges (e.g. `192.168.1.1-192.168.100.3`) to exclude
-* *excluded_networks*: An array of CIDRs to exclude; all IPs in these networks will be omitted from the baseline ASG rules
-* *included_networks*: An array of CIDRs to use as the base from which to remove IPs from
+* *exclude*: An array of IPs, CIDRs, and IP ranges (e.g. `192.168.100.4`, `192.168.0.0/16`, `192.168.1.1-192.168.100.3`) to exclude
+* *include*: An array of IPs, CIDRs, and IP ranges to use as the base from which to remove IPs/CIDRs/IP ranges from
 
 ### Creating ASG rules based on a provided list of networks
 
 To create ASG rules starting with a specific set of networks and then subtracting IPs from them, create a config, `config.yaml`:
 
 ```yaml
-included_networks:
+include:
 - 10.68.192.0/24
 
-excluded_ips:
+exclude:
 - 10.68.192.0
 - 10.68.192.127
 - 10.68.192.128
 - 10.68.192.255
-
-excluded_ranges:
 - 10.68.192.50-10.68.192.100
 ```
 
@@ -86,13 +82,9 @@ $ cat custom.json
 To create `public-networks.json` and `private-networks.json`, where each file contains all public or private networks respectively, except for specific IPs and networks that are configured, create a config, `config.yml`:
 
 ```yaml
-excluded_ips:
+exclude:
 - 192.168.100.4
-
-excluded_networks:
 - 192.168.1.0/24
-
-excluded_ranges:
 - 192.168.200.0-192.168.200.50
 ```
 

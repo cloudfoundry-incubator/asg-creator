@@ -17,10 +17,8 @@ var linkLocalIPRange = iptools.IPRange{
 }
 
 type Create struct {
-	IncludedNetworks       []iptools.IPRange `yaml:"included_networks"`
-	ExcludedCIDRRanges     []iptools.IPRange `yaml:"excluded_networks"`
-	ExcludedSingleIPRanges []iptools.IPRange `yaml:"excluded_ips"`
-	ExcludedRanges         []iptools.IPRange `yaml:"excluded_ranges"`
+	Include []iptools.IPRange `yaml:"include"`
+	Exclude []iptools.IPRange `yaml:"exclude"`
 }
 
 func LoadCreateConfig(path string) (Create, error) {
@@ -39,7 +37,7 @@ func LoadCreateConfig(path string) (Create, error) {
 }
 
 func (c *Create) IncludedNetworksRules() []asg.Rule {
-	return c.rulesFromRanges(c.IncludedNetworks)
+	return c.rulesFromRanges(c.Include)
 }
 
 func (c *Create) PublicNetworksRules() []asg.Rule {
@@ -51,20 +49,7 @@ func (c *Create) PrivateNetworksRules() []asg.Rule {
 }
 
 func (c *Create) rulesFromRanges(baseIPRanges []iptools.IPRange) []asg.Rule {
-	var excludedIPRanges []iptools.IPRange
-
-	for i := range c.ExcludedCIDRRanges {
-		excludedIPRanges = append(excludedIPRanges, c.ExcludedCIDRRanges[i])
-	}
-
-	for i := range c.ExcludedSingleIPRanges {
-		excludedIPRanges = append(excludedIPRanges, c.ExcludedSingleIPRanges[i])
-	}
-
-	for i := range c.ExcludedRanges {
-		excludedIPRanges = append(excludedIPRanges, c.ExcludedRanges[i])
-	}
-
+	excludedIPRanges := c.Exclude
 	excludedIPRanges = append(excludedIPRanges, linkLocalIPRange)
 
 	var rules []asg.Rule

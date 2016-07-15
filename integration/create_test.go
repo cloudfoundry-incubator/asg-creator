@@ -114,7 +114,7 @@ var _ = Describe("Create", func() {
 		Context("when the config contains private networks to exclude", func() {
 			BeforeEach(func() {
 				config = `
-excluded_networks:
+exclude:
 - 192.168.1.0/24
 `
 			})
@@ -156,7 +156,7 @@ excluded_networks:
 		Context("when the config contains public networks to exclude", func() {
 			BeforeEach(func() {
 				config = `
-excluded_networks:
+exclude:
 - 11.0.1.0/24
 `
 			})
@@ -206,7 +206,7 @@ excluded_networks:
 		Context("when the config contains private IPs to exclude", func() {
 			BeforeEach(func() {
 				config = `
-excluded_ips:
+exclude:
 - 192.168.100.4
 - 192.168.100.8
 `
@@ -253,7 +253,7 @@ excluded_ips:
 		Context("when the config contains public IPs to exclude", func() {
 			BeforeEach(func() {
 				config = `
-excluded_ips:
+exclude:
 - 11.0.0.5
 - 11.0.0.8
 `
@@ -308,9 +308,8 @@ excluded_ips:
 		Context("when the config contains both networks and IPs to exclude", func() {
 			BeforeEach(func() {
 				config = `
-excluded_ips:
+exclude:
 - 192.168.100.4
-excluded_networks:
 - 192.168.1.0/24
 `
 			})
@@ -356,7 +355,7 @@ excluded_networks:
 		Context("when the config is such that it expects a rule with a single IP", func() {
 			BeforeEach(func() {
 				config = `
-excluded_ips:
+exclude:
 - 192.168.100.4
 - 192.168.100.6
 `
@@ -428,10 +427,10 @@ excluded_ips:
 		Context("when the config contains networks to include", func() {
 			BeforeEach(func() {
 				config = `
-included_networks:
+include:
 - 10.68.192.0/24
 
-excluded_ips:
+exclude:
 - 10.68.192.0
 - 10.68.192.127
 - 10.68.192.128
@@ -467,10 +466,10 @@ excluded_ips:
 		Context("when the config contains IP ranges to exclude", func() {
 			BeforeEach(func() {
 				config = `
-included_networks:
+include:
 - 10.68.192.0/24
 
-excluded_ranges:
+exclude:
 - 10.68.192.0-10.68.192.5
 - 10.68.192.127-10.68.192.128
 `
