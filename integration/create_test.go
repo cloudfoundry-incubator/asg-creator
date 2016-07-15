@@ -463,5 +463,42 @@ excluded_ips:
 				]`)))
 			})
 		})
+
+		Context("when the config contains IP ranges to exclude", func() {
+			BeforeEach(func() {
+				config = `
+included_networks:
+- 10.68.192.0/24
+
+excluded_ranges:
+- 10.68.192.0-10.68.192.5
+- 10.68.192.127-10.68.192.128
+`
+			})
+
+			It("should create rules that exclude those networks", func() {
+				sess, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(sess).Should(gexec.Exit(0))
+
+				_, err = os.Lstat(outputFile.Name())
+				Expect(err).NotTo(HaveOccurred())
+
+				bs, err := ioutil.ReadFile(outputFile.Name())
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(bs).To(MatchJSON([]byte(`[
+					{
+							"protocol": "all",
+							"destination": "10.68.192.6-10.68.192.126"
+					},
+					{
+							"protocol": "all",
+							"destination": "10.68.192.129-10.68.192.255"
+					}
+				]`)))
+			})
+		})
 	})
 })

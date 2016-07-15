@@ -17,9 +17,10 @@ var blacklistedIPs = []net.IP{
 }
 
 type Create struct {
-	IncludedNetworks []string `yaml:"included_networks"`
-	ExcludedNetworks []string `yaml:"excluded_networks"`
-	ExcludedIPs      []string `yaml:"excluded_ips"`
+	IncludedNetworks []string          `yaml:"included_networks"`
+	ExcludedNetworks []string          `yaml:"excluded_networks"`
+	ExcludedIPs      []string          `yaml:"excluded_ips"`
+	ExcludedRanges   []iptools.IPRange `yaml:"excluded_ranges"`
 }
 
 func LoadCreateConfig(path string) (Create, error) {
@@ -83,7 +84,7 @@ func (c *Create) PrivateNetworksRules() []asg.Rule {
 func (c *Create) rulesForRanges(ipRangesCh chan iptools.IPRange) []asg.Rule {
 	var rules []asg.Rule
 
-	ipRanges := c.blacklistedIPFilter(c.ipFilter(c.networkFilter(ipRangesCh)))
+	ipRanges := c.blacklistedIPFilter(c.ipFilter(c.ipRangeFilter(c.networkFilter(ipRangesCh))))
 	for ipRange := range ipRanges {
 		rules = append(rules, asg.Rule{
 			Destination: ipRange.String(),
@@ -150,6 +151,24 @@ func (c *Create) networkFilter(ipRanges <-chan iptools.IPRange) <-chan iptools.I
 				} else {
 					out <- ipRange
 				}
+			}
+		}
+		close(out)
+	}()
+	return out
+}
+
+func (c *Create) ipRangeFilter(ipRanges <-chan iptools.IPRange) <-chan iptools.IPRange {
+	out := make(chan iptools.IPRange)
+	go func() {
+		for ipRange := range ipRanges {
+			if len(c.ExcludedRanges) == 0 {
+				out <- ipRange
+				continue
+			}
+
+			for _, newRange := range ipRange.SliceRanges(c.ExcludedRanges) {
+				out <- newRange
 			}
 		}
 		close(out)

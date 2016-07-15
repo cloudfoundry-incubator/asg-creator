@@ -2,8 +2,10 @@ package iptools_test
 
 import (
 	"net"
+	"strings"
 
 	"github.com/cloudfoundry-incubator/asg-creator/iptools"
+	"github.com/cloudfoundry-incubator/candiedyaml"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -190,4 +192,74 @@ var _ = Describe("IPRange", func() {
 			})
 		})
 	})
+
+	Describe("UnmarshalYAML", func() {
+		var testStruct TestStruct
+		var decodeErr error
+		var yaml string
+
+		JustBeforeEach(func() {
+			reader := strings.NewReader(yaml)
+			decoder := candiedyaml.NewDecoder(reader)
+			decodeErr = decoder.Decode(&testStruct)
+		})
+
+		Context("when given valid syntax", func() {
+			BeforeEach(func() {
+				yaml = `
+ip_range: 192.168.1.1-192.168.1.3
+`
+			})
+
+			It("populates the IPRange properly", func() {
+				Expect(decodeErr).NotTo(HaveOccurred())
+				Expect(testStruct.IPRange.Start.Equal(net.IP{192, 168, 1, 1})).To(BeTrue())
+				Expect(testStruct.IPRange.End.Equal(net.IP{192, 168, 1, 3})).To(BeTrue())
+			})
+		})
+
+		Context("when given valid syntax with extra spaces", func() {
+			BeforeEach(func() {
+				yaml = `
+ip_range: 192.168.1.1 - 192.168.1.3
+`
+			})
+
+			It("populates the IPRange properly", func() {
+				Expect(decodeErr).NotTo(HaveOccurred())
+				Expect(testStruct.IPRange.Start.Equal(net.IP{192, 168, 1, 1})).To(BeTrue())
+				Expect(testStruct.IPRange.End.Equal(net.IP{192, 168, 1, 3})).To(BeTrue())
+			})
+		})
+
+		Context("when given invalid syntax", func() {
+			BeforeEach(func() {
+				yaml = `
+ip_range: 192.168.1.1/192.168.1.3
+`
+			})
+
+			It("returns an error", func() {
+				Expect(decodeErr).To(HaveOccurred())
+				Expect(decodeErr.Error()).To(Equal("invalid range given (missing hyphen): '192.168.1.1/192.168.1.3'"))
+			})
+		})
+
+		Context("when given an invalid value", func() {
+			BeforeEach(func() {
+				yaml = `
+ip_range: 192
+`
+			})
+
+			It("returns an error", func() {
+				Expect(decodeErr).To(HaveOccurred())
+				Expect(decodeErr.Error()).To(Equal("invalid range given: '192'"))
+			})
+		})
+	})
 })
+
+type TestStruct struct {
+	IPRange iptools.IPRange `yaml:"ip_range"`
+}
