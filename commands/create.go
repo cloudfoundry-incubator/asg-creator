@@ -30,7 +30,7 @@ func (c *CreateCommand) Execute(args []string) error {
 
 	if includedNetworksRules := cfg.IncludedNetworksRules(); len(includedNetworksRules) != 0 {
 		if c.OutputPath == "" {
-			return fmt.Errorf("--output is required when config contains included_networks")
+			return fmt.Errorf("--output is required when config contains include")
 		}
 
 		networkRulesBytes, err := rulesBytes(includedNetworksRules)
