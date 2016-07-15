@@ -5,19 +5,19 @@ import (
 	"net"
 )
 
-func PrivateIPNets() []*net.IPNet {
-	return []*net.IPNet{
+func PrivateIPRanges() []IPRange {
+	return []IPRange{
 		{
-			IP:   net.IP{10, 0, 0, 0},
-			Mask: net.IPMask{255, 0, 0, 0},
+			Start: net.IP{10, 0, 0, 0},
+			End:   net.IP{10, 255, 255, 255},
 		},
 		{
-			IP:   net.IP{172, 16, 0, 0},
-			Mask: net.IPMask{255, 240, 0, 0},
+			Start: net.IP{172, 16, 0, 0},
+			End:   net.IP{172, 31, 255, 255},
 		},
 		{
-			IP:   net.IP{192, 168, 0, 0},
-			Mask: net.IPMask{255, 255, 0, 0},
+			Start: net.IP{192, 168, 0, 0},
+			End:   net.IP{192, 168, 255, 255},
 		},
 	}
 }
@@ -27,9 +27,8 @@ func PublicIPRanges() []IPRange {
 		net.IP{0, 0, 0, 0},
 	}
 
-	for _, ipNet := range PrivateIPNets() {
-		_, max := NetworkRange(ipNet)
-		nets = append(nets, Dec(ipNet.IP), Inc(max))
+	for _, ipRange := range PrivateIPRanges() {
+		nets = append(nets, Dec(ipRange.Start), Inc(ipRange.End))
 	}
 
 	nets = append(nets, net.IP{255, 255, 255, 255})

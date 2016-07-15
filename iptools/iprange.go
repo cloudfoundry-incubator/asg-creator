@@ -68,7 +68,7 @@ func NewIPRangeFromIPNet(ipNet *net.IPNet) IPRange {
 }
 
 func (r *IPRange) String() string {
-	if r.End == nil {
+	if r.SingleIP() {
 		return r.Start.String()
 	}
 
@@ -135,9 +135,17 @@ func (r *IPRange) EndsAt(ip net.IP) bool {
 	return r.End.Equal(ip)
 }
 
+func (r *IPRange) SingleIP() bool {
+	return r.Start != nil && r.End == nil
+}
+
 func (r *IPRange) SliceIP(ip net.IP) []IPRange {
 	if !r.Contains(ip) {
 		return []IPRange{*r}
+	}
+
+	if r.SingleIP() && r.Start.Equal(ip) {
+		return nil
 	}
 
 	if r.StartsAt(ip) {
@@ -193,6 +201,10 @@ func (r *IPRange) SliceRange(other IPRange) []IPRange {
 
 	if r.EqualsRange(other) {
 		return nil
+	}
+
+	if r.SingleIP() || other.SingleIP() {
+		return r.SliceIP(other.Start)
 	}
 
 	thisStart := r.Start.To4()
