@@ -15,8 +15,7 @@ components, or those for Marketplace Service VMs.
 The ASG Creator can be used to create baseline public-networks and
 private-networks ASGs that allow all public and private networks *except* those
 you want to blacklist. Additionally, it will block by default the
-169.254.169.254 link-local address that's used by multiple IaaS providers for
-VM metadata.
+169.254.0.0/16 link-local CIDR.
 
 You are encouraged to modify the files created by ASG Creator to suit your
 needs.
@@ -36,6 +35,7 @@ go get github.com/cloudfoundry-incubator/asg-creator
 Config Options
 
 * *excluded_ips*: An array of IPs to exclude; these IPs will be omitted from the baseline ASG rules
+* *excluded_ranges*: An array of IP Ranges (e.g. `192.168.1.1-192.168.100.3`) to exclude
 * *excluded_networks*: An array of CIDRs to exclude; all IPs in these networks will be omitted from the baseline ASG rules
 * *included_networks*: An array of CIDRs to use as the base from which to remove IPs from
 
@@ -52,6 +52,9 @@ excluded_ips:
 - 10.68.192.127
 - 10.68.192.128
 - 10.68.192.255
+
+excluded_ranges:
+- 10.68.192.50-10.68.192.100
 ```
 
 Use the config, specifying a custom output filename, to create an ASG rules file:
@@ -62,14 +65,18 @@ Wrote custom.json
 OK
 $ cat custom.json
 [
-    {
-        "protocol": "all",
-        "destination": "10.68.192.1-10.68.192.126"
-    },
-    {
-        "protocol": "all",
-        "destination": "10.68.192.129-10.68.192.254"
-    }
+	{
+		"protocol": "all",
+		"destination": "10.68.192.1-10.68.192.49"
+	},
+	{
+		"protocol": "all",
+		"destination": "10.68.192.101-10.68.192.126"
+	},
+	{
+		"protocol": "all",
+		"destination": "10.68.192.129-10.68.192.254"
+	}
 ]
 ```
 
@@ -84,6 +91,9 @@ excluded_ips:
 
 excluded_networks:
 - 192.168.1.0/24
+
+excluded_ranges:
+- 192.168.200.0-192.168.200.50
 ```
 
 Use the config to create ASG rules files:
@@ -113,7 +123,11 @@ $ cat private-networks.json
 	},
 	{
 		"protocol": "all",
-		"destination": "192.168.100.5-192.168.255.255"
+		"destination": "192.168.100.5-192.168.199.255"
+	},
+	{
+		"protocol": "all",
+		"destination": "192.168.200.51-192.168.255.255"
 	}
 ]
 
@@ -125,11 +139,11 @@ $ cat public-networks.json
 	},
 	{
 		"protocol": "all",
-		"destination": "11.0.0.0-169.254.169.253"
+		"destination": "11.0.0.0-169.253.255.255"
 	},
 	{
 		"protocol": "all",
-		"destination": "169.254.169.255-172.15.255.255"
+		"destination": "169.255.0.0-172.15.255.255"
 	},
 	{
 		"protocol": "all",
