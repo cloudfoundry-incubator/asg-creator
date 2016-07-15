@@ -75,6 +75,18 @@ func (r *IPRange) String() string {
 	return fmt.Sprintf("%s-%s", r.Start, r.End)
 }
 
+func (r *IPRange) StartsAt(ip net.IP) bool {
+	return r.Start.Equal(ip)
+}
+
+func (r *IPRange) EndsAt(ip net.IP) bool {
+	return r.End.Equal(ip)
+}
+
+func (r *IPRange) SingleIP() bool {
+	return r.Start != nil && r.End == nil
+}
+
 func (r *IPRange) Contains(ip net.IP) bool {
 	return bytes.Compare(r.Start.To4(), ip.To4()) <= 0 && bytes.Compare(ip.To4(), r.End.To4()) <= 0
 }
@@ -125,18 +137,6 @@ func (r *IPRange) SliceRanges(ipRanges []IPRange) []IPRange {
 	}
 
 	return rs
-}
-
-func (r *IPRange) StartsAt(ip net.IP) bool {
-	return r.Start.Equal(ip)
-}
-
-func (r *IPRange) EndsAt(ip net.IP) bool {
-	return r.End.Equal(ip)
-}
-
-func (r *IPRange) SingleIP() bool {
-	return r.Start != nil && r.End == nil
 }
 
 func (r *IPRange) SliceIP(ip net.IP) []IPRange {
