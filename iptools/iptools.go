@@ -133,11 +133,3 @@ func SliceNetFromRange(ipRange IPRange, ipNet *net.IPNet) []IPRange {
 
 	return ipRanges
 }
-
-func SliceIPFromRanges(ipRanges []IPRange, ip net.IP) []IPRange {
-	var newIPRanges []IPRange
-	for _, ipRange := range ipRanges {
-		newIPRanges = append(newIPRanges, ipRange.SliceIP(ip)...)
-	}
-	return newIPRanges
-}
