@@ -130,12 +130,8 @@ func (c *Create) filterExcludedCIDRRanges(ipRanges <-chan iptools.IPRange) <-cha
 				continue
 			}
 			for _, excludedRange := range c.ExcludedCIDRRanges {
-				if ipRange.OverlapsRange(excludedRange) {
-					for _, newRange := range ipRange.SliceRange(excludedRange) {
-						out <- newRange
-					}
-				} else {
-					out <- ipRange
+				for _, newRange := range ipRange.SliceRange(excludedRange) {
+					out <- newRange
 				}
 			}
 		}
