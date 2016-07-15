@@ -13,21 +13,47 @@ type IPRange struct {
 }
 
 func (r *IPRange) UnmarshalYAML(tag string, value interface{}) error {
-	switch data := value.(type) {
-	case string:
-		dataWithoutSpaces := strings.Replace(data, " ", "", -1)
-		idx := strings.IndexAny(dataWithoutSpaces, "-")
-		if idx == -1 {
-			return fmt.Errorf("invalid range given (missing hyphen): '%v'", data)
+	data, ok := value.(string)
+	if !ok {
+		return fmt.Errorf("failed-to-unmarshal-iprange-from-value: '%v'", value)
+	}
+
+	dataWithoutSpaces := strings.Replace(data, " ", "", -1)
+	idx := strings.IndexAny(dataWithoutSpaces, "-/")
+
+	// single IP
+	if idx == -1 {
+		ip := net.ParseIP(dataWithoutSpaces)
+		if ip == nil {
+			return fmt.Errorf("failed-to-parse-ip: %s", data)
+		}
+		*r = IPRange{Start: ip}
+		return nil
+	}
+
+	// CIDR
+	if dataWithoutSpaces[idx] == '/' {
+		_, ipNet, err := net.ParseCIDR(dataWithoutSpaces)
+		if err != nil {
+			return err
+		}
+		*r = NewIPRangeFromIPNet(ipNet)
+		return nil
+	}
+
+	// hyphenated range
+	if dataWithoutSpaces[idx] == '-' {
+		startIP := net.ParseIP(dataWithoutSpaces[:idx])
+		endIP := net.ParseIP(dataWithoutSpaces[idx+1:])
+
+		if startIP == nil || endIP == nil {
+			return fmt.Errorf("failed-to-parse-range: %s", data)
 		}
 
 		*r = IPRange{
-			Start: net.ParseIP(dataWithoutSpaces[:idx]),
-			End:   net.ParseIP(dataWithoutSpaces[idx+1:]),
+			Start: startIP,
+			End:   endIP,
 		}
-
-	default:
-		return fmt.Errorf("invalid range given: '%#v'", data)
 	}
 
 	return nil

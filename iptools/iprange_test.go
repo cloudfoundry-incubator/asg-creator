@@ -241,7 +241,6 @@ ip_range: 192.168.1.1/192.168.1.3
 
 			It("returns an error", func() {
 				Expect(decodeErr).To(HaveOccurred())
-				Expect(decodeErr.Error()).To(Equal("invalid range given (missing hyphen): '192.168.1.1/192.168.1.3'"))
 			})
 		})
 
@@ -254,7 +253,7 @@ ip_range: 192
 
 			It("returns an error", func() {
 				Expect(decodeErr).To(HaveOccurred())
-				Expect(decodeErr.Error()).To(Equal("invalid range given: '192'"))
+				Expect(decodeErr.Error()).To(Equal("failed-to-unmarshal-iprange-from-value: '192'"))
 			})
 		})
 	})

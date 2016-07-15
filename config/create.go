@@ -2,7 +2,6 @@ package config
 
 import (
 	"io/ioutil"
-	"log"
 	"net"
 
 	"github.com/cloudfoundry-incubator/asg-creator/asg"
@@ -17,10 +16,10 @@ var blacklistedIPs = []net.IP{
 }
 
 type Create struct {
-	IncludedNetworks []string          `yaml:"included_networks"`
-	ExcludedNetworks []string          `yaml:"excluded_networks"`
-	ExcludedIPs      []string          `yaml:"excluded_ips"`
-	ExcludedRanges   []iptools.IPRange `yaml:"excluded_ranges"`
+	IncludedNetworks       []iptools.IPRange `yaml:"included_networks"`
+	ExcludedCIDRRanges     []iptools.IPRange `yaml:"excluded_networks"`
+	ExcludedSingleIPRanges []iptools.IPRange `yaml:"excluded_ips"`
+	ExcludedRanges         []iptools.IPRange `yaml:"excluded_ranges"`
 }
 
 func LoadCreateConfig(path string) (Create, error) {
@@ -42,15 +41,7 @@ func (c *Create) IncludedNetworksRules() []asg.Rule {
 	ipRanges := make(chan iptools.IPRange)
 	go func() {
 		for i := range c.IncludedNetworks {
-			_, ipNet, err := net.ParseCIDR(c.IncludedNetworks[i])
-			if err != nil {
-				log.Fatalf("non-CIDR given as included network in config: %s", c.IncludedNetworks[i])
-			}
-			min, max := iptools.NetworkRange(ipNet)
-			ipRanges <- iptools.IPRange{
-				Start: min,
-				End:   max,
-			}
+			ipRanges <- c.IncludedNetworks[i]
 		}
 		close(ipRanges)
 	}()
@@ -84,7 +75,7 @@ func (c *Create) PrivateNetworksRules() []asg.Rule {
 func (c *Create) rulesForRanges(ipRangesCh chan iptools.IPRange) []asg.Rule {
 	var rules []asg.Rule
 
-	ipRanges := c.filterBlacklistedIPs(c.filterExcludedIPs(c.filterExcludedRanges(c.filterExcludedNetworks(ipRangesCh))))
+	ipRanges := c.filterBlacklistedIPs(c.filterExcludedSingleIPRanges(c.filterExcludedRanges(c.filterExcludedCIDRRanges(ipRangesCh))))
 	for ipRange := range ipRanges {
 		rules = append(rules, asg.Rule{
 			Destination: ipRange.String(),
@@ -95,18 +86,18 @@ func (c *Create) rulesForRanges(ipRangesCh chan iptools.IPRange) []asg.Rule {
 	return rules
 }
 
-func (c *Create) filterExcludedIPs(ipRanges <-chan iptools.IPRange) <-chan iptools.IPRange {
+func (c *Create) filterExcludedSingleIPRanges(ipRanges <-chan iptools.IPRange) <-chan iptools.IPRange {
 	out := make(chan iptools.IPRange)
 	go func() {
 		for ipRange := range ipRanges {
-			if len(c.ExcludedIPs) == 0 {
+			if len(c.ExcludedSingleIPRanges) == 0 {
 				out <- ipRange
 				continue
 			}
 
 			var ips []net.IP
-			for i := range c.ExcludedIPs {
-				ips = append(ips, net.ParseIP(c.ExcludedIPs[i]))
+			for i := range c.ExcludedSingleIPRanges {
+				ips = append(ips, c.ExcludedSingleIPRanges[i].Start)
 			}
 			for _, newRange := range ipRange.SliceIPs(ips) {
 				out <- newRange
@@ -130,22 +121,17 @@ func (c *Create) filterBlacklistedIPs(ipRanges <-chan iptools.IPRange) <-chan ip
 	return out
 }
 
-func (c *Create) filterExcludedNetworks(ipRanges <-chan iptools.IPRange) <-chan iptools.IPRange {
+func (c *Create) filterExcludedCIDRRanges(ipRanges <-chan iptools.IPRange) <-chan iptools.IPRange {
 	out := make(chan iptools.IPRange)
 	go func() {
 		for ipRange := range ipRanges {
-			if len(c.ExcludedNetworks) == 0 {
+			if len(c.ExcludedCIDRRanges) == 0 {
 				out <- ipRange
 				continue
 			}
-			for _, excludedNetwork := range c.ExcludedNetworks {
-				_, excludedIPNet, err := net.ParseCIDR(excludedNetwork)
-				if err != nil {
-					log.Fatalf("non-CIDR given as network in config: %s", excludedNetwork)
-				}
-
-				if ipRange.OverlapsNet(excludedIPNet) {
-					for _, newRange := range iptools.SliceNetFromRange(ipRange, excludedIPNet) {
+			for _, excludedRange := range c.ExcludedCIDRRanges {
+				if ipRange.OverlapsRange(excludedRange) {
+					for _, newRange := range ipRange.SliceRange(excludedRange) {
 						out <- newRange
 					}
 				} else {
