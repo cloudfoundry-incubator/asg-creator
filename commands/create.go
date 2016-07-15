@@ -74,7 +74,7 @@ func writeFile(filepath string, filebytes []byte) error {
 	if err != nil {
 		return fmt.Errorf(fmt.Sprintf("Failed to write private-networks.json: %s\n", err.Error()))
 	}
-	fmt.Printf("Wrote %s", filepath)
+	fmt.Printf("Wrote %s\n", filepath)
 	return nil
 }
 
