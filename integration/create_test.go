@@ -362,7 +362,7 @@ excluded_ips:
 `
 			})
 
-			It("should create a rule with a single IP", func() {
+			FIt("should create a rule with a single IP", func() {
 				sess, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 

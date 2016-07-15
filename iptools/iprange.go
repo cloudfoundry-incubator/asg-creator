@@ -144,53 +144,61 @@ func (r *IPRange) SliceIP(ip net.IP) []IPRange {
 		return []IPRange{*r}
 	}
 
-	if r.SingleIP() && r.Start.Equal(ip) {
+	if r.SingleIP() {
 		return nil
 	}
 
-	if r.StartsAt(ip) {
+	switch {
+	case r.StartsAt(ip):
+		if r.EndsAt(Inc(ip)) {
+			return []IPRange{
+				{
+					Start: r.End,
+				},
+			}
+		}
+
 		return []IPRange{
 			{
 				Start: Inc(ip),
 				End:   r.End,
 			},
 		}
-	}
+	case r.EndsAt(ip):
+		if r.StartsAt(Dec(ip)) {
+			return []IPRange{
+				{
+					Start: r.Start,
+				},
+			}
+		}
 
-	if r.EndsAt(ip) {
 		return []IPRange{
 			{
 				Start: r.Start,
-				End:   Dec(ip),
+				End:   Dec(r.End),
 			},
 		}
-	}
-
-	a := IPRange{
-		Start: r.Start,
-		End:   Dec(ip),
-	}
-
-	b := IPRange{
-		Start: Inc(ip),
-		End:   r.End,
-	}
-
-	if r.Start.Equal(Dec(ip)) {
-		a = IPRange{
+	default:
+		x := IPRange{
 			Start: r.Start,
+			End:   Dec(ip),
 		}
-	}
 
-	if r.End.Equal(Inc(ip)) {
-		b = IPRange{
-			Start: r.Start,
+		if x.StartsAt(x.End) {
+			x.End = nil
 		}
-	}
 
-	return []IPRange{
-		a,
-		b,
+		y := IPRange{
+			Start: Inc(ip),
+			End:   r.End,
+		}
+
+		if y.StartsAt(y.End) {
+			y.End = nil
+		}
+
+		return []IPRange{x, y}
 	}
 }
 
