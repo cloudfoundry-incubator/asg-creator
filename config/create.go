@@ -11,10 +11,9 @@ import (
 
 const protocolAll = "all"
 
-var blacklistedIPRanges = []iptools.IPRange{
-	{
-		Start: net.IP{169, 254, 169, 254},
-	},
+var linkLocalIPRange = iptools.IPRange{
+	Start: net.IP{169, 254, 0, 0},
+	End:   net.IP{169, 254, 255, 255},
 }
 
 type Create struct {
@@ -66,9 +65,7 @@ func (c *Create) rulesFromRanges(baseIPRanges []iptools.IPRange) []asg.Rule {
 		excludedIPRanges = append(excludedIPRanges, c.ExcludedRanges[i])
 	}
 
-	for i := range blacklistedIPRanges {
-		excludedIPRanges = append(excludedIPRanges, blacklistedIPRanges[i])
-	}
+	excludedIPRanges = append(excludedIPRanges, linkLocalIPRange)
 
 	var rules []asg.Rule
 	for i := range baseIPRanges {

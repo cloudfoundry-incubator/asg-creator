@@ -43,11 +43,11 @@ var _ = Describe("Create", func() {
 						"protocol": "all"
 					},
 					{
-						"destination": "11.0.0.0-169.254.169.253",
+						"destination": "11.0.0.0-169.253.255.255",
 						"protocol": "all"
 					},
 					{
-						"destination": "169.254.169.255-172.15.255.255",
+						"destination": "169.255.0.0-172.15.255.255",
 						"protocol": "all"
 					},
 					{
@@ -185,11 +185,11 @@ excluded_networks:
 						},
 						{
 							"protocol": "all",
-							"destination": "11.0.2.0-169.254.169.253"
+							"destination": "11.0.2.0-169.253.255.255"
 						},
 						{
 							"protocol": "all",
-							"destination": "169.254.169.255-172.15.255.255"
+							"destination": "169.255.0.0-172.15.255.255"
 						},
 						{
 							"protocol": "all",
@@ -272,36 +272,36 @@ excluded_ips:
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(bs).To(MatchJSON([]byte(`
-				  [
-				  	{
-				  		"destination": "0.0.0.0-9.255.255.255",
-				  		"protocol": "all"
-				  	},
-				  	{
-				  		"destination": "11.0.0.0-11.0.0.4",
-				  		"protocol": "all"
-				  	},
-				  	{
-				  		"destination": "11.0.0.6-11.0.0.7",
-				  		"protocol": "all"
-				  	},
-				  	{
-				  		"destination": "11.0.0.9-169.254.169.253",
-				  		"protocol": "all"
-				  	},
-				  	{
-				  		"destination": "169.254.169.255-172.15.255.255",
-				  		"protocol": "all"
-				  	},
-				  	{
-				  		"destination": "172.32.0.0-192.167.255.255",
-				  		"protocol": "all"
-				  	},
-				  	{
-				  		"destination": "192.169.0.0-255.255.255.255",
-				  		"protocol": "all"
-				  	}
-				  ]`)))
+					[
+						{
+							"destination": "0.0.0.0-9.255.255.255",
+							"protocol": "all"
+						},
+						{
+							"destination": "11.0.0.0-11.0.0.4",
+							"protocol": "all"
+						},
+						{
+							"destination": "11.0.0.6-11.0.0.7",
+							"protocol": "all"
+						},
+						{
+							"destination": "11.0.0.9-169.253.255.255",
+							"protocol": "all"
+						},
+						{
+							"destination": "169.255.0.0-172.15.255.255",
+							"protocol": "all"
+						},
+						{
+							"destination": "172.32.0.0-192.167.255.255",
+							"protocol": "all"
+						},
+						{
+							"destination": "192.169.0.0-255.255.255.255",
+							"protocol": "all"
+						}
+					]`)))
 			})
 		})
 
