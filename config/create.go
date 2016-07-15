@@ -84,7 +84,7 @@ func (c *Create) PrivateNetworksRules() []asg.Rule {
 func (c *Create) rulesForRanges(ipRangesCh chan iptools.IPRange) []asg.Rule {
 	var rules []asg.Rule
 
-	ipRanges := c.blacklistedIPFilter(c.ipFilter(c.ipRangeFilter(c.networkFilter(ipRangesCh))))
+	ipRanges := c.filterBlacklistedIPs(c.filterExcludedIPs(c.filterExcludedRanges(c.filterExcludedNetworks(ipRangesCh))))
 	for ipRange := range ipRanges {
 		rules = append(rules, asg.Rule{
 			Destination: ipRange.String(),
@@ -95,7 +95,7 @@ func (c *Create) rulesForRanges(ipRangesCh chan iptools.IPRange) []asg.Rule {
 	return rules
 }
 
-func (c *Create) ipFilter(ipRanges <-chan iptools.IPRange) <-chan iptools.IPRange {
+func (c *Create) filterExcludedIPs(ipRanges <-chan iptools.IPRange) <-chan iptools.IPRange {
 	out := make(chan iptools.IPRange)
 	go func() {
 		for ipRange := range ipRanges {
@@ -117,7 +117,7 @@ func (c *Create) ipFilter(ipRanges <-chan iptools.IPRange) <-chan iptools.IPRang
 	return out
 }
 
-func (c *Create) blacklistedIPFilter(ipRanges <-chan iptools.IPRange) <-chan iptools.IPRange {
+func (c *Create) filterBlacklistedIPs(ipRanges <-chan iptools.IPRange) <-chan iptools.IPRange {
 	out := make(chan iptools.IPRange)
 	go func() {
 		for ipRange := range ipRanges {
@@ -130,7 +130,7 @@ func (c *Create) blacklistedIPFilter(ipRanges <-chan iptools.IPRange) <-chan ipt
 	return out
 }
 
-func (c *Create) networkFilter(ipRanges <-chan iptools.IPRange) <-chan iptools.IPRange {
+func (c *Create) filterExcludedNetworks(ipRanges <-chan iptools.IPRange) <-chan iptools.IPRange {
 	out := make(chan iptools.IPRange)
 	go func() {
 		for ipRange := range ipRanges {
@@ -158,7 +158,7 @@ func (c *Create) networkFilter(ipRanges <-chan iptools.IPRange) <-chan iptools.I
 	return out
 }
 
-func (c *Create) ipRangeFilter(ipRanges <-chan iptools.IPRange) <-chan iptools.IPRange {
+func (c *Create) filterExcludedRanges(ipRanges <-chan iptools.IPRange) <-chan iptools.IPRange {
 	out := make(chan iptools.IPRange)
 	go func() {
 		for ipRange := range ipRanges {
