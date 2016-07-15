@@ -111,20 +111,6 @@ func (r *IPRange) OverlapsRange(other IPRange) bool {
 		r.Contains(other.Start) || r.Contains(other.End)
 }
 
-func (r *IPRange) SliceIPs(ips []net.IP) []IPRange {
-	rs := []IPRange{*r}
-
-	for i := range ips {
-		var newRanges []IPRange
-		for j := range rs {
-			newRanges = append(newRanges, rs[j].SliceIP(ips[i])...)
-		}
-		rs = newRanges
-	}
-
-	return rs
-}
-
 func (r *IPRange) SliceRanges(ipRanges []IPRange) []IPRange {
 	rs := []IPRange{*r}
 

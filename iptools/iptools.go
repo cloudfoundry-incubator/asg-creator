@@ -93,12 +93,6 @@ func CopyIP(from net.IP) net.IP {
 	return to
 }
 
-func SliceNetFromNet(netX, netY *net.IPNet) []IPRange {
-	min, max := NetworkRange(netX)
-	ipRange := IPRange{Start: min, End: max}
-	return SliceNetFromRange(ipRange, netY)
-}
-
 func SliceNetFromRange(ipRange IPRange, ipNet *net.IPNet) []IPRange {
 	if !ipRange.OverlapsNet(ipNet) {
 		return []IPRange{ipRange}
