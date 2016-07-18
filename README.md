@@ -76,6 +76,15 @@ $ cat custom.json
 ]
 ```
 
+Use the [cf cli](https://github.com/cloudfoundry/cli/releases/latest) to create and bind an ASG with the rules file:
+
+```
+$ cf create-security-group my-security-group custom.json
+$ cf bind-security-group my-security-group my-org my-space
+
+# restart any apps in my-org/my-space for the new ASG to take effect
+$ cf restart my-app-running-in-my-space
+```
 
 ### Creating ASGs for default-staging and default-running
 
